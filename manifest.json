@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Dash Nuke",
+  "version": "0.1.0",
+  "description": "Hides X posts containing em dashes.",
+  "content_scripts": [
+    {
+      "matches": ["*://*.x.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
