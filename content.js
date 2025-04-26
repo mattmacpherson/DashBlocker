@@ -41,6 +41,39 @@ function extractTweetText(tweetElement) {
     return null;
 }
 
+// Handle DOM mutations to detect new tweets
+function handleMutations(mutationsList, observer) {
+    // Use requestAnimationFrame to batch processing and avoid layout thrashing
+    window.requestAnimationFrame(() => {
+        let foundNewTweets = false;
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                mutation.addedNodes.forEach(node => {
+                    // Check if the added node itself is a tweet or contains tweets
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        if (node.matches && node.matches(TWEET_SELECTOR)) {
+                            // The added node is a tweet element
+                            processTweet(node);
+                            foundNewTweets = true;
+                        } else {
+                            // Check if the added node contains tweet elements
+                            // (e.g., a container div was added)
+                            const newTweetsInside = node.querySelectorAll ? node.querySelectorAll(TWEET_SELECTOR) : [];
+                            if (newTweetsInside.length > 0) {
+                                newTweetsInside.forEach(tweetElement => processTweet(tweetElement));
+                                foundNewTweets = true;
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        if (foundNewTweets) {
+            console.log("Dash Nuke: Processed dynamically added tweets.");
+        }
+    });
+}
+
 // Scan the page for tweets
 function scanForTweets() {
     console.log("Dash Nuke: Scanning for tweets...");
@@ -52,11 +85,28 @@ function scanForTweets() {
     });
 }
 
-// Placeholder for future logic
+// Initialize the extension
 function initializeDashNuke() {
     console.log("Dash Nuke: Initializing...");
-    scanForTweets(); // Perform initial scan on load
-    // MutationObserver setup will go here in Phase 4
+    
+    // Initial scan for tweets already present
+    scanForTweets();
+    
+    // Set up MutationObserver to watch for new tweets
+    const observer = new MutationObserver(handleMutations);
+    
+    // Configuration for the observer:
+    // Observe additions/removals of child nodes in the subtree
+    const config = { childList: true, subtree: true };
+    
+    // Start observing the document body
+    const targetNode = document.body;
+    if (targetNode) {
+        observer.observe(targetNode, config);
+        console.log("Dash Nuke: MutationObserver started.");
+    } else {
+        console.error("Dash Nuke: Could not find target node for MutationObserver.");
+    }
 }
 
 // Run initialization logic
