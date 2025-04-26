@@ -4,10 +4,12 @@ console.log("Dash Nuke: Content script loaded and running on", window.location.h
 const TWEET_SELECTOR = 'article[data-testid="tweet"]';
 const TWEET_TEXT_SELECTOR = 'div[data-testid="tweetText"]';
 
-// Check if text contains an em dash
-function containsEmDash(text) {
-    // The em dash character (—), Unicode U+2014
-    return text.includes('—');
+// Check if text contains an em dash between word characters
+function containsWordBoundEmDash(text) {
+    // Regex: Looks for a word character (\w), followed by an em dash (—),
+    // followed by another word character (\w)
+    const wordBoundEmDashRegex = /\w—\w/;
+    return wordBoundEmDashRegex.test(text);
 }
 
 // Hide a tweet element
@@ -27,7 +29,7 @@ function processTweet(tweetElement) {
     }
 
     const textContent = extractTweetText(tweetElement);
-    if (textContent && containsEmDash(textContent)) {
+    if (textContent && containsWordBoundEmDash(textContent)) {
         hideTweet(tweetElement);
     }
 }
