@@ -1,5 +1,19 @@
 document.addEventListener('DOMContentLoaded', function() {
   const toggleSwitch = document.getElementById('toggleSwitch');
+  const blockedCountSpan = document.getElementById('blockedCount');
+  
+  // Load the blocked count from storage
+  chrome.storage.sync.get(['blockedTweetCount'], function(result) {
+    let count = result.blockedTweetCount || 0; // Default to 0
+    if (blockedCountSpan) {
+      blockedCountSpan.textContent = count;
+    } else {
+      console.error("DashBlocker: Could not find blockedCount element in popup.");
+    }
+    if (chrome.runtime.lastError) {
+      console.error("DashBlocker: Error loading count:", chrome.runtime.lastError);
+    }
+  });
   
   // Load the current state from storage
   chrome.storage.sync.get(['enabled'], function(result) {

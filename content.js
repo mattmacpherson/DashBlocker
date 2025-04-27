@@ -22,6 +22,18 @@ function hideTweet(tweetElement) {
     // Add a marker attribute to know it's been processed/hidden by this extension
     tweetElement.setAttribute('data-dash-nuke-hidden', 'true');
     console.log("DashBlocker: Hiding tweet containing em dash.");
+    
+    // Increment and store the blocked tweet count
+    chrome.storage.sync.get(['blockedTweetCount'], function(result) {
+        let currentCount = result.blockedTweetCount || 0; // Default to 0 if not set
+        let newCount = currentCount + 1;
+        
+        chrome.storage.sync.set({ blockedTweetCount: newCount }, function() {
+            if (chrome.runtime.lastError) {
+                console.error("DashBlocker: Error saving count:", chrome.runtime.lastError);
+            }
+        });
+    });
 }
 
 // Show a previously hidden tweet
