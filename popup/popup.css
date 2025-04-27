@@ -24,18 +24,9 @@ header {
   background-color: #192734;
   padding: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.logo {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.logo i {
-  font-size: 20px;
-  margin-right: 10px;
-  color: #1D9BF0;
 }
 
 .app-name {
