@@ -156,8 +156,3 @@ footer {
 .twitter-button:hover {
   background-color: rgba(29, 155, 240, 0.1);
 }
-
-.twitter-button i {
-  margin-right: 8px;
-  font-size: 14px;
-}
