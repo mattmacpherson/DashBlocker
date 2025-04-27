@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Save to storage
     chrome.storage.sync.set({ enabled: isEnabled }, function() {
-      console.log('Dash Nuke: Extension ' + (isEnabled ? 'enabled' : 'disabled'));
+      console.log('DashBlocker: Extension ' + (isEnabled ? 'enabled' : 'disabled'));
       
       // Send message to content script
       chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {

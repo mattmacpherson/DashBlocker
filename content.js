@@ -1,4 +1,4 @@
-console.log("Dash Nuke: Content script loaded and running on", window.location.href);
+console.log("DashBlocker: Content script loaded and running on", window.location.href);
 
 // Extension state
 let isEnabled = true;
@@ -21,14 +21,14 @@ function hideTweet(tweetElement) {
     tweetElement.style.display = 'none';
     // Add a marker attribute to know it's been processed/hidden by this extension
     tweetElement.setAttribute('data-dash-nuke-hidden', 'true');
-    console.log("Dash Nuke: Hiding tweet containing em dash.");
+    console.log("DashBlocker: Hiding tweet containing em dash.");
 }
 
 // Show a previously hidden tweet
 function showTweet(tweetElement) {
     if (tweetElement.getAttribute('data-dash-nuke-hidden') === 'true') {
         tweetElement.style.display = '';
-        console.log("Dash Nuke: Showing previously hidden tweet.");
+        console.log("DashBlocker: Showing previously hidden tweet.");
     }
 }
 
@@ -89,16 +89,16 @@ function handleMutations(mutationsList, observer) {
             }
         }
         if (foundNewTweets) {
-            console.log("Dash Nuke: Processed dynamically added tweets.");
+            console.log("DashBlocker: Processed dynamically added tweets.");
         }
     });
 }
 
 // Scan the page for tweets
 function scanForTweets() {
-    console.log("Dash Nuke: Scanning for tweets...");
+    console.log("DashBlocker: Scanning for tweets...");
     const tweetElements = document.querySelectorAll(TWEET_SELECTOR);
-    console.log(`Dash Nuke: Found ${tweetElements.length} potential tweet elements.`);
+    console.log(`DashBlocker: Found ${tweetElements.length} potential tweet elements.`);
 
     tweetElements.forEach(tweetElement => {
         processTweet(tweetElement);
@@ -115,7 +115,7 @@ function updateAllTweets() {
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.action === 'toggleState') {
         isEnabled = message.enabled;
-        console.log(`Dash Nuke: Extension ${isEnabled ? 'enabled' : 'disabled'}`);
+        console.log(`DashBlocker: Extension ${isEnabled ? 'enabled' : 'disabled'}`);
         updateAllTweets();
     }
     sendResponse({ success: true });
@@ -123,14 +123,14 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 });
 
 // Initialize the extension
-function initializeDashNuke() {
-    console.log("Dash Nuke: Initializing...");
+function initializeDashBlocker() {
+    console.log("DashBlocker: Initializing...");
     
     // Load enabled state from storage
     chrome.storage.sync.get(['enabled'], function(result) {
         // Default to enabled if not set
         isEnabled = result.enabled !== false;
-        console.log(`Dash Nuke: Extension ${isEnabled ? 'enabled' : 'disabled'}`);
+        console.log(`DashBlocker: Extension ${isEnabled ? 'enabled' : 'disabled'}`);
         
         // Initial scan for tweets already present
         scanForTweets();
@@ -146,12 +146,12 @@ function initializeDashNuke() {
         const targetNode = document.body;
         if (targetNode) {
             observer.observe(targetNode, config);
-            console.log("Dash Nuke: MutationObserver started.");
+            console.log("DashBlocker: MutationObserver started.");
         } else {
-            console.error("Dash Nuke: Could not find target node for MutationObserver.");
+            console.error("DashBlocker: Could not find target node for MutationObserver.");
         }
     });
 }
 
 // Run initialization logic
-initializeDashNuke();
+initializeDashBlocker();
