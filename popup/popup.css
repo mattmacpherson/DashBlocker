@@ -80,6 +80,28 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
+/* Stats Container Styles */
+.stats-container {
+  background-color: #f8f8f8;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.stat-count {
+  font-size: 42px;
+  font-weight: bold;
+  color: #1DA1F2;
+  line-height: 1;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #666;
+}
+
 /* Twitter/X Button Styles */
 .social-container {
   display: flex;
