@@ -10,25 +10,27 @@
     <header>
       <div class="logo">
         <i class="fas fa-ban"></i>
-        <h1>DashBlocker</h1>
+        <span class="app-name">DashBlocker</span>
       </div>
     </header>
     
     <main>
-      <div class="stats-card">
-        <div class="stat-count">
-          <span id="blockedCount">0</span>
+      <section class="section">
+        <div class="counter-container">
+          <div class="counter-value" id="blockedCount">0</div>
+          <div class="counter-label">Posts Blocked</div>
         </div>
-        <div class="stat-label">Posts Blocked</div>
-      </div>
+      </section>
       
-      <div class="toggle-card">
-        <div class="toggle-label">Extension Status</div>
-        <label class="switch">
-          <input type="checkbox" id="toggleSwitch" checked>
-          <span class="slider round"></span>
-        </label>
-      </div>
+      <section class="section">
+        <div class="toggle-row">
+          <span class="toggle-label">Extension Enabled</span>
+          <label class="switch">
+            <input type="checkbox" id="toggleSwitch" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </section>
     </main>
     
     <footer>
