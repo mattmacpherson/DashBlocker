@@ -1,5 +1,8 @@
 console.log("Dash Nuke: Content script loaded and running on", window.location.href);
 
+// Extension state
+let isEnabled = true;
+
 // Selectors for X/Twitter DOM elements
 const TWEET_SELECTOR = 'article[data-testid="tweet"]';
 const TWEET_TEXT_SELECTOR = 'div[data-testid="tweetText"]';
@@ -21,16 +24,31 @@ function hideTweet(tweetElement) {
     console.log("Dash Nuke: Hiding tweet containing em dash.");
 }
 
+// Show a previously hidden tweet
+function showTweet(tweetElement) {
+    if (tweetElement.getAttribute('data-dash-nuke-hidden') === 'true') {
+        tweetElement.style.display = '';
+        console.log("Dash Nuke: Showing previously hidden tweet.");
+    }
+}
+
 // Process a single tweet element
 function processTweet(tweetElement) {
     // Avoid processing if already hidden by us
     if (tweetElement.getAttribute('data-dash-nuke-hidden') === 'true') {
+        // If extension is disabled, show the tweet
+        if (!isEnabled) {
+            showTweet(tweetElement);
+        }
         return;
     }
 
-    const textContent = extractTweetText(tweetElement);
-    if (textContent && containsWordBoundEmDash(textContent)) {
-        hideTweet(tweetElement);
+    // Only hide tweets if extension is enabled
+    if (isEnabled) {
+        const textContent = extractTweetText(tweetElement);
+        if (textContent && containsWordBoundEmDash(textContent)) {
+            hideTweet(tweetElement);
+        }
     }
 }
 
@@ -87,28 +105,52 @@ function scanForTweets() {
     });
 }
 
+// Update all tweets based on current enabled state
+function updateAllTweets() {
+    const allTweets = document.querySelectorAll(TWEET_SELECTOR);
+    allTweets.forEach(tweet => processTweet(tweet));
+}
+
+// Listen for messages from the popup
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+    if (message.action === 'toggleState') {
+        isEnabled = message.enabled;
+        console.log(`Dash Nuke: Extension ${isEnabled ? 'enabled' : 'disabled'}`);
+        updateAllTweets();
+    }
+    sendResponse({ success: true });
+    return true;
+});
+
 // Initialize the extension
 function initializeDashNuke() {
     console.log("Dash Nuke: Initializing...");
     
-    // Initial scan for tweets already present
-    scanForTweets();
-    
-    // Set up MutationObserver to watch for new tweets
-    const observer = new MutationObserver(handleMutations);
-    
-    // Configuration for the observer:
-    // Observe additions/removals of child nodes in the subtree
-    const config = { childList: true, subtree: true };
-    
-    // Start observing the document body
-    const targetNode = document.body;
-    if (targetNode) {
-        observer.observe(targetNode, config);
-        console.log("Dash Nuke: MutationObserver started.");
-    } else {
-        console.error("Dash Nuke: Could not find target node for MutationObserver.");
-    }
+    // Load enabled state from storage
+    chrome.storage.sync.get(['enabled'], function(result) {
+        // Default to enabled if not set
+        isEnabled = result.enabled !== false;
+        console.log(`Dash Nuke: Extension ${isEnabled ? 'enabled' : 'disabled'}`);
+        
+        // Initial scan for tweets already present
+        scanForTweets();
+        
+        // Set up MutationObserver to watch for new tweets
+        const observer = new MutationObserver(handleMutations);
+        
+        // Configuration for the observer:
+        // Observe additions/removals of child nodes in the subtree
+        const config = { childList: true, subtree: true };
+        
+        // Start observing the document body
+        const targetNode = document.body;
+        if (targetNode) {
+            observer.observe(targetNode, config);
+            console.log("Dash Nuke: MutationObserver started.");
+        } else {
+            console.error("Dash Nuke: Could not find target node for MutationObserver.");
+        }
+    });
 }
 
 // Run initialization logic
