@@ -3,30 +3,40 @@
 <head>
   <title>DashBlocker</title>
   <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
   <div class="container">
-    <h1>DashBlocker</h1>
-    <div class="toggle-container">
-      <span>Enable Extension</span>
-      <label class="switch">
-        <input type="checkbox" id="toggleSwitch">
-        <span class="slider round"></span>
-      </label>
-    </div>
-    
-    <div class="stats-container">
-      <div class="stat-count">
-        <span id="blockedCount">0</span>
+    <header>
+      <div class="logo">
+        <i class="fas fa-ban"></i>
+        <h1>DashBlocker</h1>
       </div>
-      <div class="stat-label">Posts Blocked</div>
-    </div>
+    </header>
     
-    <div class="social-container">
+    <main>
+      <div class="stats-card">
+        <div class="stat-count">
+          <span id="blockedCount">0</span>
+        </div>
+        <div class="stat-label">Posts Blocked</div>
+      </div>
+      
+      <div class="toggle-card">
+        <div class="toggle-label">Extension Status</div>
+        <label class="switch">
+          <input type="checkbox" id="toggleSwitch" checked>
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </main>
+    
+    <footer>
       <a href="https://x.com/itsMattMac" target="_blank" class="twitter-button">
+        <i class="fab fa-x-twitter"></i>
         Follow @itsMattMac
       </a>
-    </div>
+    </footer>
   </div>
   <script src="popup.js"></script>
 </body>
