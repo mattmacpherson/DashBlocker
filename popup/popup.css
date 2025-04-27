@@ -150,6 +150,11 @@ footer {
   font-size: 14px;
   font-weight: 500;
   border: 1px solid #1D9BF0;
+  transition: background-color 0.2s ease;
+}
+
+.twitter-button:hover {
+  background-color: rgba(29, 155, 240, 0.1);
 }
 
 .twitter-button i {
