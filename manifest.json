@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "DashBlocker",
+  "name": "DeadDash",
   "version": "1.0.0",
   "description": "Fight AI-generated spam: Instantly filter out tweets with em-dashes from your timeline.",
   "action": {

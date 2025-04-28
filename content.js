@@ -1,4 +1,4 @@
-console.log("DashBlocker: Content script loaded and running on", window.location.href);
+console.log("DeadDash: Content script loaded and running on", window.location.href);
 
 // Extension state
 let isEnabled = true;
@@ -20,8 +20,8 @@ function hideTweet(tweetElement) {
     // Simple hiding by setting display style to none
     tweetElement.style.display = 'none';
     // Add a marker attribute to know it's been processed/hidden by this extension
-    tweetElement.setAttribute('data-dash-nuke-hidden', 'true');
-    console.log("DashBlocker: Hiding tweet containing em dash.");
+    tweetElement.setAttribute('data-dead-dash-hidden', 'true');
+    console.log("DeadDash: Hiding tweet containing em dash.");
     
     // Increment and store the blocked tweet count
     chrome.storage.sync.get(['blockedTweetCount'], function(result) {
@@ -30,7 +30,7 @@ function hideTweet(tweetElement) {
         
         chrome.storage.sync.set({ blockedTweetCount: newCount }, function() {
             if (chrome.runtime.lastError) {
-                console.error("DashBlocker: Error saving count:", chrome.runtime.lastError);
+                console.error("DeadDash: Error saving count:", chrome.runtime.lastError);
             }
         });
     });
@@ -38,16 +38,16 @@ function hideTweet(tweetElement) {
 
 // Show a previously hidden tweet
 function showTweet(tweetElement) {
-    if (tweetElement.getAttribute('data-dash-nuke-hidden') === 'true') {
+    if (tweetElement.getAttribute('data-dead-dash-hidden') === 'true') {
         tweetElement.style.display = '';
-        console.log("DashBlocker: Showing previously hidden tweet.");
+        console.log("DeadDash: Showing previously hidden tweet.");
     }
 }
 
 // Process a single tweet element
 function processTweet(tweetElement) {
     // Avoid processing if already hidden by us
-    if (tweetElement.getAttribute('data-dash-nuke-hidden') === 'true') {
+    if (tweetElement.getAttribute('data-dead-dash-hidden') === 'true') {
         // If extension is disabled, show the tweet
         if (!isEnabled) {
             showTweet(tweetElement);
@@ -101,16 +101,16 @@ function handleMutations(mutationsList, observer) {
             }
         }
         if (foundNewTweets) {
-            console.log("DashBlocker: Processed dynamically added tweets.");
+            console.log("DeadDash: Processed dynamically added tweets.");
         }
     });
 }
 
 // Scan the page for tweets
 function scanForTweets() {
-    console.log("DashBlocker: Scanning for tweets...");
+    console.log("DeadDash: Scanning for tweets...");
     const tweetElements = document.querySelectorAll(TWEET_SELECTOR);
-    console.log(`DashBlocker: Found ${tweetElements.length} potential tweet elements.`);
+    console.log(`DeadDash: Found ${tweetElements.length} potential tweet elements.`);
 
     tweetElements.forEach(tweetElement => {
         processTweet(tweetElement);
@@ -127,7 +127,7 @@ function updateAllTweets() {
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.action === 'toggleState') {
         isEnabled = message.enabled;
-        console.log(`DashBlocker: Extension ${isEnabled ? 'enabled' : 'disabled'}`);
+        console.log(`DeadDash: Extension ${isEnabled ? 'enabled' : 'disabled'}`);
         updateAllTweets();
     }
     sendResponse({ success: true });
@@ -135,14 +135,14 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 });
 
 // Initialize the extension
-function initializeDashBlocker() {
-    console.log("DashBlocker: Initializing...");
+function initializeDeadDash() {
+    console.log("DeadDash: Initializing...");
     
     // Load enabled state from storage
     chrome.storage.sync.get(['enabled'], function(result) {
         // Default to enabled if not set
         isEnabled = result.enabled !== false;
-        console.log(`DashBlocker: Extension ${isEnabled ? 'enabled' : 'disabled'}`);
+        console.log(`DeadDash: Extension ${isEnabled ? 'enabled' : 'disabled'}`);
         
         // Initial scan for tweets already present
         scanForTweets();
@@ -158,12 +158,12 @@ function initializeDashBlocker() {
         const targetNode = document.body;
         if (targetNode) {
             observer.observe(targetNode, config);
-            console.log("DashBlocker: MutationObserver started.");
+            console.log("DeadDash: MutationObserver started.");
         } else {
-            console.error("DashBlocker: Could not find target node for MutationObserver.");
+            console.error("DeadDash: Could not find target node for MutationObserver.");
         }
     });
 }
 
 // Run initialization logic
-initializeDashBlocker();
+initializeDeadDash();

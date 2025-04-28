@@ -8,10 +8,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (blockedCountSpan) {
       blockedCountSpan.textContent = count;
     } else {
-      console.error("DashBlocker: Could not find blockedCount element in popup.");
+      console.error("DeadDash: Could not find blockedCount element in popup.");
     }
     if (chrome.runtime.lastError) {
-      console.error("DashBlocker: Error loading count:", chrome.runtime.lastError);
+      console.error("DeadDash: Error loading count:", chrome.runtime.lastError);
     }
   });
   
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Save to storage
     chrome.storage.sync.set({ enabled: isEnabled }, function() {
-      console.log('DashBlocker: Extension ' + (isEnabled ? 'enabled' : 'disabled'));
+      console.log('DeadDash: Extension ' + (isEnabled ? 'enabled' : 'disabled'));
       
       // Send message to content script
       chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
