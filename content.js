@@ -2,10 +2,16 @@ console.log("DeadDash: Content script loaded and running on", window.location.hr
 
 // Extension state
 let isEnabled = true;
+let isEmojiBlockingEnabled = false;
+let isThreadEmojiBlockingEnabled = false;
 
 // Selectors for X/Twitter DOM elements
 const TWEET_SELECTOR = 'article[data-testid="tweet"]';
 const TWEET_TEXT_SELECTOR = 'div[data-testid="tweetText"]';
+
+// Emoji to detect
+const POINTING_DOWN_EMOJI = '👇';
+const THREAD_EMOJI = '🧵';
 
 // Check if text contains an em dash between word characters
 function containsWordBoundEmDash(text) {
@@ -15,13 +21,29 @@ function containsWordBoundEmDash(text) {
     return wordBoundEmDashRegex.test(text);
 }
 
+// Check if text contains the pointing down emoji
+function containsPointingDownEmoji(text) {
+    if (!text) {
+        return false;
+    }
+    return text.includes(POINTING_DOWN_EMOJI);
+}
+
+// Check if text contains the thread emoji
+function containsThreadEmoji(text) {
+    if (!text) {
+        return false;
+    }
+    return text.includes(THREAD_EMOJI);
+}
+
 // Hide a tweet element
-function hideTweet(tweetElement) {
+function hideTweet(tweetElement, reason = 'filter') {
     // Simple hiding by setting display style to none
     tweetElement.style.display = 'none';
     // Add a marker attribute to know it's been processed/hidden by this extension
     tweetElement.setAttribute('data-dead-dash-hidden', 'true');
-    console.log("DeadDash: Hiding tweet containing em dash.");
+    console.log(`DeadDash: Hiding tweet based on ${reason} filter.`);
     
     // Increment and store the blocked tweet count
     chrome.storage.sync.get(['blockedTweetCount'], function(result) {
@@ -58,8 +80,24 @@ function processTweet(tweetElement) {
     // Only hide tweets if extension is enabled
     if (isEnabled) {
         const textContent = extractTweetText(tweetElement);
-        if (textContent && containsWordBoundEmDash(textContent)) {
-            hideTweet(tweetElement);
+        if (textContent) {
+            // Check for em-dash (always enabled when extension is on)
+            if (containsWordBoundEmDash(textContent)) {
+                hideTweet(tweetElement, 'em-dash');
+                return;
+            }
+            
+            // Check for pointing down emoji (only if that feature is enabled)
+            if (isEmojiBlockingEnabled && containsPointingDownEmoji(textContent)) {
+                hideTweet(tweetElement, 'pointing-down-emoji');
+                return;
+            }
+            
+            // Check for thread emoji (only if that feature is enabled)
+            if (isThreadEmojiBlockingEnabled && containsThreadEmoji(textContent)) {
+                hideTweet(tweetElement, 'thread-emoji');
+                return;
+            }
         }
     }
 }
@@ -130,6 +168,16 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         console.log(`DeadDash: Extension ${isEnabled ? 'enabled' : 'disabled'}`);
         updateAllTweets();
     }
+    else if (message.action === 'toggleEmojiState') {
+        isEmojiBlockingEnabled = message.emojiBlockingEnabled;
+        console.log(`DeadDash: Emoji blocking ${isEmojiBlockingEnabled ? 'enabled' : 'disabled'}`);
+        updateAllTweets();
+    }
+    else if (message.action === 'toggleThreadEmojiState') {
+        isThreadEmojiBlockingEnabled = message.threadEmojiBlockingEnabled;
+        console.log(`DeadDash: Thread emoji blocking ${isThreadEmojiBlockingEnabled ? 'enabled' : 'disabled'}`);
+        updateAllTweets();
+    }
     sendResponse({ success: true });
     return true;
 });
@@ -139,10 +187,17 @@ function initializeDeadDash() {
     console.log("DeadDash: Initializing...");
     
     // Load enabled state from storage
-    chrome.storage.sync.get(['enabled'], function(result) {
+    chrome.storage.sync.get(['enabled', 'emojiBlockingEnabled', 'threadEmojiBlockingEnabled'], function(result) {
         // Default to enabled if not set
         isEnabled = result.enabled !== false;
+        // Default to disabled for emoji blocking
+        isEmojiBlockingEnabled = result.emojiBlockingEnabled === true;
+        // Default to disabled for thread emoji blocking
+        isThreadEmojiBlockingEnabled = result.threadEmojiBlockingEnabled === true;
+        
         console.log(`DeadDash: Extension ${isEnabled ? 'enabled' : 'disabled'}`);
+        console.log(`DeadDash: Emoji blocking ${isEmojiBlockingEnabled ? 'enabled' : 'disabled'}`);
+        console.log(`DeadDash: Thread emoji blocking ${isThreadEmojiBlockingEnabled ? 'enabled' : 'disabled'}`);
         
         // Initial scan for tweets already present
         scanForTweets();
