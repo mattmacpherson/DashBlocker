@@ -29,11 +29,13 @@ const POLICE_LIGHT_FILENAMES = new Set(['1f6a8.svg']); // Police light emoji
 
 // Track processed emoji images to avoid re-processing
 const processedImages = new WeakSet();
+// Track hidden tweets to avoid redundant operations
+const hiddenTweets = new WeakSet();
 
 // Debug helper to log important messages
 function debugLog(message, data = null) {
     if (DEBUG_MODE) {
-        console.warn("%c DeadDash Debug: " + message, "background: #ff0000; color: white; padding: 2px;", data || '');
+        console.log("%c DeadDash: " + message, "background: #2196F3; color: white; padding: 2px;", data || '');
     }
 }
 
@@ -54,37 +56,25 @@ function containsPointingDownEmoji(tweetElement) {
     // Get all image elements in the tweet
     const allImages = tweetElement.querySelectorAll('img');
     
-    if (DEBUG_MODE && allImages.length > 0) {
-        debugLog(`Found ${allImages.length} image elements in tweet`, tweetElement);
-    }
-    
-    // First check - broader search for any emoji
+    // Check for pointing down emoji
     for (const img of allImages) {
         if (processedImages.has(img)) continue;
         
         const src = img.getAttribute('src') || '';
         const alt = img.getAttribute('alt') || '';
         
-        // Log any emoji image for debugging
+        // Only process emoji images
         if (src.includes('/emoji/')) {
-            debugLog("Found emoji image:", { 
-                src, 
-                alt,
-                filename: src.split('/').pop() || '' 
-            });
-        }
-        
-        // Now check specifically for our target emoji
-        if (src.includes('/emoji/')) {
+            processedImages.add(img);
+            
             const filename = src.split('/').pop() || '';
             
             if (POINTING_DOWN_FILENAMES.has(filename) || alt === POINTING_DOWN_EMOJI) {
-                debugLog("MATCH: Found pointing down emoji!", {
-                    src: src,
-                    alt: alt,
-                    filename: filename
-                });
-                processedImages.add(img);
+                if (DEBUG_MODE) {
+                    debugLog("Found pointing down emoji", {
+                        src, alt, filename
+                    });
+                }
                 return true;
             }
         }
@@ -106,17 +96,18 @@ function containsThreadEmoji(tweetElement) {
         const src = img.getAttribute('src') || '';
         const alt = img.getAttribute('alt') || '';
         
-        // Check for thread emoji
+        // Only process emoji images
         if (src.includes('/emoji/')) {
+            processedImages.add(img);
+            
             const filename = src.split('/').pop() || '';
             
             if (THREAD_FILENAMES.has(filename) || alt === THREAD_EMOJI) {
-                debugLog("MATCH: Found thread emoji!", {
-                    src: src,
-                    alt: alt,
-                    filename: filename
-                });
-                processedImages.add(img);
+                if (DEBUG_MODE) {
+                    debugLog("Found thread emoji", {
+                        src, alt, filename
+                    });
+                }
                 return true;
             }
         }
@@ -138,17 +129,18 @@ function containsPoliceEmoji(tweetElement) {
         const src = img.getAttribute('src') || '';
         const alt = img.getAttribute('alt') || '';
         
-        // Check for police emoji
+        // Only process emoji images
         if (src.includes('/emoji/')) {
+            processedImages.add(img);
+            
             const filename = src.split('/').pop() || '';
             
             if (POLICE_LIGHT_FILENAMES.has(filename) || alt === POLICE_LIGHT_EMOJI) {
-                debugLog("MATCH: Found police emoji!", {
-                    src: src,
-                    alt: alt,
-                    filename: filename
-                });
-                processedImages.add(img);
+                if (DEBUG_MODE) {
+                    debugLog("Found police emoji", {
+                        src, alt, filename
+                    });
+                }
                 return true;
             }
         }
@@ -158,8 +150,14 @@ function containsPoliceEmoji(tweetElement) {
 
 // Hide a tweet element
 function hideTweet(tweetElement, reason = 'filter') {
+    // Skip if already hidden to avoid redundant operations
+    if (hiddenTweets.has(tweetElement)) {
+        return;
+    }
+    
     // Simple hiding by setting display style to none
     tweetElement.style.display = 'none';
+    hiddenTweets.add(tweetElement);
     console.log(`DeadDash: Hiding tweet based on ${reason} filter.`);
     
     // Increment and store the blocked tweet count
@@ -175,30 +173,23 @@ function hideTweet(tweetElement, reason = 'filter') {
     });
 }
 
-// Show a previously hidden tweet
+// Show a previously hidden tweet (only needed for manual toggling)
 function showTweet(tweetElement) {
     tweetElement.style.display = '';
-    console.log("DeadDash: Showing previously hidden tweet.");
+    hiddenTweets.delete(tweetElement);
+    debugLog("Showing previously hidden tweet");
 }
 
 // Process a single tweet element
 function processTweet(tweetElement) {
+    // Skip already hidden tweets to avoid redundant operations
+    if (hiddenTweets.has(tweetElement)) {
+        return;
+    }
+    
     const textContent = extractTweetText(tweetElement);
     let shouldHide = false;
     let hideReason = null;
-
-    // Add debugging info
-    if (DEBUG_MODE) {
-        debugLog("Processing tweet", { 
-            tweetElement,
-            filters: {
-                emDash: isEmDashBlockingEnabled,
-                pointingDown: isEmojiBlockingEnabled,
-                thread: isThreadEmojiBlockingEnabled,
-                police: isPoliceEmojiBlockingEnabled
-            }
-        });
-    }
 
     // Check each rule IF its corresponding toggle is enabled
     if (isEmDashBlockingEnabled && containsWordBoundEmDash(textContent)) {
@@ -207,33 +198,19 @@ function processTweet(tweetElement) {
     } else if (isEmojiBlockingEnabled && containsPointingDownEmoji(tweetElement)) {
         shouldHide = true;
         hideReason = 'pointing-down-emoji';
-        debugLog("HIDING tweet with pointing down emoji");
+        debugLog("Hiding tweet with pointing down emoji");
     } else if (isThreadEmojiBlockingEnabled && containsThreadEmoji(tweetElement)) {
         shouldHide = true;
         hideReason = 'thread-emoji';
-        debugLog("HIDING tweet with thread emoji");
+        debugLog("Hiding tweet with thread emoji");
     } else if (isPoliceEmojiBlockingEnabled && containsPoliceEmoji(tweetElement)) {
         shouldHide = true;
         hideReason = 'police-emoji';
-        debugLog("HIDING tweet with police emoji");
+        debugLog("Hiding tweet with police emoji");
     }
 
-    // Get current visibility state
-    const isCurrentlyHidden = tweetElement.style.display === 'none';
-
     if (shouldHide) {
-        if (!isCurrentlyHidden) {
-            // Hide it (pass reason for logging)
-            hideTweet(tweetElement, hideReason);
-        }
-        // If it should be hidden and already is, do nothing.
-    } else {
-        // Should NOT be hidden
-        if (isCurrentlyHidden) {
-            // Show it
-            showTweet(tweetElement);
-        }
-        // If it shouldn't be hidden and isn't, do nothing.
+        hideTweet(tweetElement, hideReason);
     }
 }
 
@@ -252,7 +229,8 @@ function extractTweetText(tweetElement) {
 function handleMutations(mutationsList, observer) {
     // Debounce processing with requestAnimationFrame to avoid layout thrashing
     window.requestAnimationFrame(() => {
-        let foundNewTweets = false;
+        let newTweetsFound = false;
+        
         for (const mutation of mutationsList) {
             if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                 mutation.addedNodes.forEach(node => {
@@ -261,22 +239,23 @@ function handleMutations(mutationsList, observer) {
                         if (node.matches && node.matches(TWEET_SELECTOR)) {
                             // The added node is a tweet element
                             processTweet(node);
-                            foundNewTweets = true;
+                            newTweetsFound = true;
                         } else {
                             // Check if the added node contains tweet elements
                             // (e.g., a container div was added)
                             const newTweetsInside = node.querySelectorAll ? node.querySelectorAll(TWEET_SELECTOR) : [];
                             if (newTweetsInside.length > 0) {
                                 newTweetsInside.forEach(tweetElement => processTweet(tweetElement));
-                                foundNewTweets = true;
+                                newTweetsFound = true;
                             }
                         }
                     }
                 });
             }
         }
-        if (foundNewTweets) {
-            console.log("DeadDash: Processed dynamically added tweets.");
+        
+        if (newTweetsFound && DEBUG_MODE) {
+            debugLog("Processed new tweets");
         }
     });
 }
@@ -295,7 +274,7 @@ function scanForTweets() {
 // Update all tweets based on current enabled state
 function updateAllTweets() {
     const allTweets = document.querySelectorAll(TWEET_SELECTOR);
-    debugLog(`Updating all ${allTweets.length} tweets with current filter settings`, {
+    debugLog(`Updating ${allTweets.length} tweets with filters:`, {
         emDash: isEmDashBlockingEnabled,
         pointingDown: isEmojiBlockingEnabled,
         thread: isThreadEmojiBlockingEnabled,
@@ -333,7 +312,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 
 // Force scan all tweets - can be called from console for debugging
 window.deadDashForceScan = function() {
-    debugLog("Forcing scan of all tweets on page");
+    debugLog("Forcing scan of all tweets");
     updateAllTweets();
     return "Scan complete";
 };
