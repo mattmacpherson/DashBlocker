@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-  const toggleSwitch = document.getElementById('toggleSwitch');
+  const toggleEmDashSwitch = document.getElementById('toggleEmDashSwitch');
   const toggleEmojiSwitch = document.getElementById('toggleEmojiSwitch');
   const toggleThreadEmojiSwitch = document.getElementById('toggleThreadEmojiSwitch');
   const blockedCountSpan = document.getElementById('blockedCount');
@@ -18,10 +18,10 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Load the current state from storage
-  chrome.storage.sync.get(['enabled', 'emojiBlockingEnabled', 'threadEmojiBlockingEnabled'], function(result) {
-    // Default to enabled if not set
-    const isEnabled = result.enabled !== false;
-    toggleSwitch.checked = isEnabled;
+  chrome.storage.sync.get(['emDashBlockingEnabled', 'emojiBlockingEnabled', 'threadEmojiBlockingEnabled'], function(result) {
+    // Default em-dash blocking to enabled if not set
+    const isEmDashBlockingEnabled = result.emDashBlockingEnabled !== false;
+    toggleEmDashSwitch.checked = isEmDashBlockingEnabled;
     
     // Default to disabled for emoji blocking
     const isEmojiBlockingEnabled = result.emojiBlockingEnabled === true;
@@ -32,18 +32,21 @@ document.addEventListener('DOMContentLoaded', function() {
     toggleThreadEmojiSwitch.checked = isThreadEmojiBlockingEnabled;
   });
   
-  // Save state when main toggle changes
-  toggleSwitch.addEventListener('change', function() {
-    const isEnabled = toggleSwitch.checked;
+  // Save state when em-dash toggle changes
+  toggleEmDashSwitch.addEventListener('change', function() {
+    const isEmDashBlockingEnabled = toggleEmDashSwitch.checked;
     
     // Save to storage
-    chrome.storage.sync.set({ enabled: isEnabled }, function() {
-      console.log('DeadDash: Extension ' + (isEnabled ? 'enabled' : 'disabled'));
+    chrome.storage.sync.set({ emDashBlockingEnabled: isEmDashBlockingEnabled }, function() {
+      console.log('DeadDash: Em Dash Blocking ' + (isEmDashBlockingEnabled ? 'enabled' : 'disabled'));
       
       // Send message to content script
       chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0] && tabs[0].url.includes('x.com')) {
-          chrome.tabs.sendMessage(tabs[0].id, { action: 'toggleState', enabled: isEnabled });
+        if (tabs[0] && tabs[0].url && (tabs[0].url.includes('x.com') || tabs[0].url.includes('twitter.com'))) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action: 'toggleEmDashState',
+            emDashBlockingEnabled: isEmDashBlockingEnabled
+          });
         }
       });
     });
@@ -59,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Send message to content script
       chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0] && tabs[0].url.includes('x.com')) {
+        if (tabs[0] && tabs[0].url && (tabs[0].url.includes('x.com') || tabs[0].url.includes('twitter.com'))) {
           chrome.tabs.sendMessage(tabs[0].id, { 
             action: 'toggleEmojiState', 
             emojiBlockingEnabled: isEmojiBlockingEnabled 
@@ -79,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Send message to content script
       chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0] && tabs[0].url.includes('x.com')) {
+        if (tabs[0] && tabs[0].url && (tabs[0].url.includes('x.com') || tabs[0].url.includes('twitter.com'))) {
           chrome.tabs.sendMessage(tabs[0].id, { 
             action: 'toggleThreadEmojiState', 
             threadEmojiBlockingEnabled: isThreadEmojiBlockingEnabled 
