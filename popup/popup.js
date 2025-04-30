@@ -4,6 +4,15 @@ document.addEventListener('DOMContentLoaded', function() {
   const toggleThreadEmojiSwitch = document.getElementById('toggleThreadEmojiSwitch');
   const togglePoliceEmojiSwitch = document.getElementById('togglePoliceEmojiSwitch');
   const blockedCountSpan = document.getElementById('blockedCount');
+  const analyticsButton = document.getElementById('analyticsButton');
+  
+  // Handle analytics button click
+  if (analyticsButton) {
+    analyticsButton.addEventListener('click', function() {
+      const analyticsUrl = chrome.runtime.getURL('analytics.html');
+      chrome.tabs.create({ url: analyticsUrl });
+    });
+  }
   
   // Load the blocked count from storage
   chrome.storage.sync.get(['blockedTweetCount'], function(result) {

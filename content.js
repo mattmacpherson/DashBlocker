@@ -160,14 +160,35 @@ function hideTweet(tweetElement, reason = 'filter') {
     hiddenTweets.add(tweetElement);
     console.log(`DeadDash: Hiding tweet based on ${reason} filter.`);
     
-    // Increment and store the blocked tweet count
-    chrome.storage.sync.get(['blockedTweetCount'], function(result) {
+    // Define keys for individual counts
+    const countKeys = {
+        'em-dash': 'blocked_em_dash_count',
+        'pointing-down-emoji': 'blocked_pointing_down_emoji_count',
+        'thread-emoji': 'blocked_thread_emoji_count',
+        'police-emoji': 'blocked_police_emoji_count',
+        'filter': 'blocked_unknown_count' // Fallback if reason is generic
+    };
+    const specificCountKey = countKeys[reason] || countKeys['filter'];
+    
+    // Increment and store both the total and specific counts
+    chrome.storage.sync.get(['blockedTweetCount', specificCountKey], function(result) {
         let currentCount = result.blockedTweetCount || 0; // Default to 0 if not set
-        let newCount = currentCount + 1;
+        let currentSpecificCount = result[specificCountKey] || 0; // Default to 0 if not set
         
-        chrome.storage.sync.set({ blockedTweetCount: newCount }, function() {
+        let newCount = currentCount + 1;
+        let newSpecificCount = currentSpecificCount + 1;
+        
+        // Prepare data to save
+        let dataToSave = {
+            blockedTweetCount: newCount
+        };
+        dataToSave[specificCountKey] = newSpecificCount;
+        
+        chrome.storage.sync.set(dataToSave, function() {
             if (chrome.runtime.lastError) {
-                console.error("DeadDash: Error saving count:", chrome.runtime.lastError);
+                console.error("DeadDash: Error saving counts:", chrome.runtime.lastError);
+            } else if (DEBUG_MODE) {
+                debugLog(`Incremented count for ${reason}. New specific count: ${newSpecificCount}. New total: ${newCount}`);
             }
         });
     });

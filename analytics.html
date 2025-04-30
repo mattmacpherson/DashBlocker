@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>DeadDash Analytics</title>
+  <link rel="stylesheet" href="analytics.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <span class="app-name">DeadDash Analytics</span>
+      </div>
+      <button id="closeButton" class="close-button" title="Close">✕</button>
+    </header>
+    
+    <main>
+      <section class="section">
+        <h2 class="section-title">Block Counts</h2>
+        <ul class="stats-list">
+          <li class="stats-item">
+            <span class="stats-label">Em Dash (—)</span>
+            <span class="stats-value" id="emDashCount">0</span>
+          </li>
+          <li class="stats-item">
+            <span class="stats-label">Pointing Down Emoji (👇)</span>
+            <span class="stats-value" id="pointingDownEmojiCount">0</span>
+          </li>
+          <li class="stats-item">
+            <span class="stats-label">Thread Emoji (🧵)</span>
+            <span class="stats-value" id="threadEmojiCount">0</span>
+          </li>
+          <li class="stats-item">
+            <span class="stats-label">Police Car Light Emoji (🚨)</span>
+            <span class="stats-value" id="policeEmojiCount">0</span>
+          </li>
+          <li class="stats-item">
+            <span class="stats-label">Other</span>
+            <span class="stats-value" id="unknownCount">0</span>
+          </li>
+          <li class="stats-item total">
+            <span class="stats-label">Total Blocks</span>
+            <span class="stats-value" id="totalCount">0</span>
+          </li>
+        </ul>
+        <div class="action-buttons">
+          <button id="resetButton" class="reset-button">Reset All Counts</button>
+        </div>
+      </section>
+    </main>
+    
+    <footer>
+      <a href="https://x.com/itsMattMac" target="_blank" class="twitter-button">
+        Follow @itsMattMac
+      </a>
+    </footer>
+  </div>
+  <script src="analytics.js"></script>
+</body>
+</html>
