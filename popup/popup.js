@@ -4,28 +4,87 @@ document.addEventListener('DOMContentLoaded', function() {
   const toggleThreadEmojiSwitch = document.getElementById('toggleThreadEmojiSwitch');
   const togglePoliceEmojiSwitch = document.getElementById('togglePoliceEmojiSwitch');
   const blockedCountSpan = document.getElementById('blockedCount');
-  const analyticsButton = document.getElementById('analyticsButton');
+  const resetButton = document.getElementById('resetButton');
   
-  // Handle analytics button click
-  if (analyticsButton) {
-    analyticsButton.addEventListener('click', function() {
-      const analyticsUrl = chrome.runtime.getURL('analytics.html');
-      chrome.tabs.create({ url: analyticsUrl });
+  // Get references to the count elements
+  const emDashCountElement = document.getElementById('emDashCount');
+  const pointingDownEmojiCountElement = document.getElementById('pointingDownEmojiCount');
+  const threadEmojiCountElement = document.getElementById('threadEmojiCount');
+  const policeEmojiCountElement = document.getElementById('policeEmojiCount');
+  const unknownCountElement = document.getElementById('unknownCount');
+  
+  // Define the keys for fetching count data
+  const countKeys = [
+    'blockedTweetCount',
+    'blocked_em_dash_count',
+    'blocked_pointing_down_emoji_count',
+    'blocked_thread_emoji_count',
+    'blocked_police_emoji_count',
+    'blocked_unknown_count'
+  ];
+  
+  // Function to load and display counts
+  function loadCounts() {
+    // Fetch counts from storage
+    chrome.storage.sync.get(countKeys, function(result) {
+      // Update total count
+      let totalCount = result.blockedTweetCount || 0; // Default to 0
+      if (blockedCountSpan) {
+        blockedCountSpan.textContent = totalCount;
+      } else {
+        console.error("DeadDash: Could not find blockedCount element in popup.");
+      }
+      
+      // Update detailed counts
+      if (emDashCountElement) {
+        emDashCountElement.textContent = result.blocked_em_dash_count || 0;
+      }
+      
+      if (pointingDownEmojiCountElement) {
+        pointingDownEmojiCountElement.textContent = result.blocked_pointing_down_emoji_count || 0;
+      }
+      
+      if (threadEmojiCountElement) {
+        threadEmojiCountElement.textContent = result.blocked_thread_emoji_count || 0;
+      }
+      
+      if (policeEmojiCountElement) {
+        policeEmojiCountElement.textContent = result.blocked_police_emoji_count || 0;
+      }
+      
+      if (unknownCountElement) {
+        unknownCountElement.textContent = result.blocked_unknown_count || 0;
+      }
+      
+      if (chrome.runtime.lastError) {
+        console.error("DeadDash: Error loading counts:", chrome.runtime.lastError);
+      }
     });
   }
   
-  // Load the blocked count from storage
-  chrome.storage.sync.get(['blockedTweetCount'], function(result) {
-    let count = result.blockedTweetCount || 0; // Default to 0
-    if (blockedCountSpan) {
-      blockedCountSpan.textContent = count;
-    } else {
-      console.error("DeadDash: Could not find blockedCount element in popup.");
-    }
-    if (chrome.runtime.lastError) {
-      console.error("DeadDash: Error loading count:", chrome.runtime.lastError);
-    }
-  });
+  // Load counts when popup opens
+  loadCounts();
+  
+  // Implement reset functionality
+  if (resetButton) {
+    resetButton.addEventListener('click', function() {
+      if (confirm('Are you sure you want to reset all block counts to zero?')) {
+        // Create an object with all count keys set to 0
+        const resetData = {};
+        countKeys.forEach(key => resetData[key] = 0);
+        
+        // Update storage with reset values
+        chrome.storage.sync.set(resetData, function() {
+          if (chrome.runtime.lastError) {
+            console.error("DeadDash: Error resetting counts:", chrome.runtime.lastError);
+          } else {
+            // Reload counts to display zeros
+            loadCounts();
+          }
+        });
+      }
+    });
+  }
   
   // Load the current state from storage
   chrome.storage.sync.get(['emDashBlockingEnabled', 'emojiBlockingEnabled', 'threadEmojiBlockingEnabled', 'policeEmojiBlockingEnabled'], function(result) {

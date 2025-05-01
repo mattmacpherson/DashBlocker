@@ -11,7 +11,6 @@
       <div class="logo">
         <span class="app-name">DeadDash</span>
       </div>
-      <button id="analyticsButton" class="analytics-button" title="View Analytics">📊</button>
     </header>
     
     <main>
@@ -20,6 +19,35 @@
           <div class="counter-value" id="blockedCount">0</div>
           <div class="counter-label">Posts Blocked</div>
         </div>
+      </section>
+      
+      <section class="section">
+        <div class="stats-header">
+          <h3 class="stats-title">Block Breakdown</h3>
+          <button id="resetButton" class="reset-button" title="Reset all counts to zero">Reset</button>
+        </div>
+        <ul class="stats-list">
+          <li class="stats-item">
+            <span class="stats-label">Em Dash (—)</span>
+            <span class="stats-value" id="emDashCount">0</span>
+          </li>
+          <li class="stats-item">
+            <span class="stats-label">Pointing Down (👇)</span>
+            <span class="stats-value" id="pointingDownEmojiCount">0</span>
+          </li>
+          <li class="stats-item">
+            <span class="stats-label">Thread (🧵)</span>
+            <span class="stats-value" id="threadEmojiCount">0</span>
+          </li>
+          <li class="stats-item">
+            <span class="stats-label">Police Light (🚨)</span>
+            <span class="stats-value" id="policeEmojiCount">0</span>
+          </li>
+          <li class="stats-item">
+            <span class="stats-label">Other</span>
+            <span class="stats-value" id="unknownCount">0</span>
+          </li>
+        </ul>
       </section>
       
       <section class="section">
