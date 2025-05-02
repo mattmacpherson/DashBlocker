@@ -2,33 +2,21 @@ console.log("DeadDash: Content script loaded and running on", window.location.hr
 
 // Extension state
 let isEmDashBlockingEnabled = true;
-let isEmojiBlockingEnabled = false;
-let isThreadEmojiBlockingEnabled = false;
-let isPoliceEmojiBlockingEnabled = false;
 
 // Debug mode - set to true to enable verbose logging
 const DEBUG_MODE = true;
+
+// Enhanced debug function for this investigation
+function debugInvestigation(area, message, data = null) {
+    if (DEBUG_MODE) {
+        console.log(`%c DeadDash INVESTIGATION [${area}]: ${message}`, "background: #FF5722; color: white; padding: 2px;", data || '');
+    }
+}
 
 // Selectors for X/Twitter DOM elements
 const TWEET_SELECTOR = 'article[data-testid="tweet"]';
 const TWEET_TEXT_SELECTOR = 'div[data-testid="tweetText"]';
 
-// Emoji definitions
-const POINTING_DOWN_EMOJI = '👇';
-const THREAD_EMOJI = '🧵';
-const POLICE_LIGHT_EMOJI = '🚨';
-
-// Emoji image filename patterns (Twemoji)
-const POINTING_DOWN_FILENAMES = new Set([
-  '1f447.svg', // Base emoji
-  '1f447-1f3fb.svg', '1f447-1f3fc.svg', // Light and medium-light skin tones
-  '1f447-1f3fd.svg', '1f447-1f3fe.svg', '1f447-1f3ff.svg' // Medium, medium-dark, and dark skin tones
-]);
-const THREAD_FILENAMES = new Set(['1f9f5.svg']); // Thread emoji
-const POLICE_LIGHT_FILENAMES = new Set(['1f6a8.svg']); // Police light emoji
-
-// Track processed emoji images to avoid re-processing
-const processedImages = new WeakSet();
 // Track hidden tweets to avoid redundant operations
 const hiddenTweets = new WeakSet();
 
@@ -47,109 +35,8 @@ function containsWordBoundEmDash(text) {
     return wordBoundEmDashRegex.test(text);
 }
 
-// Check if tweet contains the pointing down emoji
-function containsPointingDownEmoji(tweetElement) {
-    if (!tweetElement) {
-        return false;
-    }
-    
-    // Get all image elements in the tweet
-    const allImages = tweetElement.querySelectorAll('img');
-    
-    // Check for pointing down emoji
-    for (const img of allImages) {
-        if (processedImages.has(img)) continue;
-        
-        const src = img.getAttribute('src') || '';
-        const alt = img.getAttribute('alt') || '';
-        
-        // Only process emoji images
-        if (src.includes('/emoji/')) {
-            processedImages.add(img);
-            
-            const filename = src.split('/').pop() || '';
-            
-            if (POINTING_DOWN_FILENAMES.has(filename) || alt === POINTING_DOWN_EMOJI) {
-                if (DEBUG_MODE) {
-                    debugLog("Found pointing down emoji", {
-                        src, alt, filename
-                    });
-                }
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-// Check if tweet contains the thread emoji
-function containsThreadEmoji(tweetElement) {
-    if (!tweetElement) {
-        return false;
-    }
-    
-    // Look for all images in the tweet
-    const allImages = tweetElement.querySelectorAll('img');
-    for (const img of allImages) {
-        if (processedImages.has(img)) continue;
-        
-        const src = img.getAttribute('src') || '';
-        const alt = img.getAttribute('alt') || '';
-        
-        // Only process emoji images
-        if (src.includes('/emoji/')) {
-            processedImages.add(img);
-            
-            const filename = src.split('/').pop() || '';
-            
-            if (THREAD_FILENAMES.has(filename) || alt === THREAD_EMOJI) {
-                if (DEBUG_MODE) {
-                    debugLog("Found thread emoji", {
-                        src, alt, filename
-                    });
-                }
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-// Check if tweet contains the police car light emoji
-function containsPoliceEmoji(tweetElement) {
-    if (!tweetElement) {
-        return false;
-    }
-    
-    // Look for all images in the tweet
-    const allImages = tweetElement.querySelectorAll('img');
-    for (const img of allImages) {
-        if (processedImages.has(img)) continue;
-        
-        const src = img.getAttribute('src') || '';
-        const alt = img.getAttribute('alt') || '';
-        
-        // Only process emoji images
-        if (src.includes('/emoji/')) {
-            processedImages.add(img);
-            
-            const filename = src.split('/').pop() || '';
-            
-            if (POLICE_LIGHT_FILENAMES.has(filename) || alt === POLICE_LIGHT_EMOJI) {
-                if (DEBUG_MODE) {
-                    debugLog("Found police emoji", {
-                        src, alt, filename
-                    });
-                }
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 // Hide a tweet element
-function hideTweet(tweetElement, reason = 'filter') {
+function hideTweet(tweetElement, reason = 'em-dash') {
     // Skip if already hidden to avoid redundant operations
     if (hiddenTweets.has(tweetElement)) {
         return;
@@ -160,35 +47,29 @@ function hideTweet(tweetElement, reason = 'filter') {
     hiddenTweets.add(tweetElement);
     console.log(`DeadDash: Hiding tweet based on ${reason} filter.`);
     
-    // Define keys for individual counts
-    const countKeys = {
-        'em-dash': 'blocked_em_dash_count',
-        'pointing-down-emoji': 'blocked_pointing_down_emoji_count',
-        'thread-emoji': 'blocked_thread_emoji_count',
-        'police-emoji': 'blocked_police_emoji_count',
-        'filter': 'blocked_unknown_count' // Fallback if reason is generic
-    };
-    const specificCountKey = countKeys[reason] || countKeys['filter'];
+    // Only track total and em-dash counts
+    const keysToUpdate = ['blockedTweetCount'];
+    if (reason === 'em-dash') {
+        keysToUpdate.push('blocked_em_dash_count');
+    }
     
     // Increment and store both the total and specific counts
-    chrome.storage.sync.get(['blockedTweetCount', specificCountKey], function(result) {
-        let currentCount = result.blockedTweetCount || 0; // Default to 0 if not set
-        let currentSpecificCount = result[specificCountKey] || 0; // Default to 0 if not set
+    chrome.storage.sync.get(keysToUpdate, function(result) {
+        let dataToSave = {};
+        let newTotalCount = (result.blockedTweetCount || 0) + 1;
+        dataToSave.blockedTweetCount = newTotalCount;
         
-        let newCount = currentCount + 1;
-        let newSpecificCount = currentSpecificCount + 1;
-        
-        // Prepare data to save
-        let dataToSave = {
-            blockedTweetCount: newCount
-        };
-        dataToSave[specificCountKey] = newSpecificCount;
+        let newEmDashCount = result.blocked_em_dash_count || 0;
+        if (reason === 'em-dash') {
+            newEmDashCount++;
+            dataToSave.blocked_em_dash_count = newEmDashCount;
+        }
         
         chrome.storage.sync.set(dataToSave, function() {
             if (chrome.runtime.lastError) {
                 console.error("DeadDash: Error saving counts:", chrome.runtime.lastError);
             } else if (DEBUG_MODE) {
-                debugLog(`Incremented count for ${reason}. New specific count: ${newSpecificCount}. New total: ${newCount}`);
+                debugLog(`Incremented counts. New em-dash count: ${newEmDashCount}. New total: ${newTotalCount}`);
             }
         });
     });
@@ -210,24 +91,16 @@ function processTweet(tweetElement) {
     
     const textContent = extractTweetText(tweetElement);
     let shouldHide = false;
-    let hideReason = null;
+    let hideReason = 'em-dash'; // Default and only reason now
 
-    // Check each rule IF its corresponding toggle is enabled
+    // Log state before checking rules
+    debugInvestigation('ProcessTweet', 'Checking tweet with current state:', {
+        isEmDashBlockingEnabled
+    });
+
+    // Check only the em-dash rule
     if (isEmDashBlockingEnabled && containsWordBoundEmDash(textContent)) {
         shouldHide = true;
-        hideReason = 'em-dash';
-    } else if (isEmojiBlockingEnabled && containsPointingDownEmoji(tweetElement)) {
-        shouldHide = true;
-        hideReason = 'pointing-down-emoji';
-        debugLog("Hiding tweet with pointing down emoji");
-    } else if (isThreadEmojiBlockingEnabled && containsThreadEmoji(tweetElement)) {
-        shouldHide = true;
-        hideReason = 'thread-emoji';
-        debugLog("Hiding tweet with thread emoji");
-    } else if (isPoliceEmojiBlockingEnabled && containsPoliceEmoji(tweetElement)) {
-        shouldHide = true;
-        hideReason = 'police-emoji';
-        debugLog("Hiding tweet with police emoji");
     }
 
     if (shouldHide) {
@@ -296,13 +169,25 @@ function scanForTweets() {
 function updateAllTweets() {
     const allTweets = document.querySelectorAll(TWEET_SELECTOR);
     debugLog(`Updating ${allTweets.length} tweets with filters:`, {
-        emDash: isEmDashBlockingEnabled,
-        pointingDown: isEmojiBlockingEnabled,
-        thread: isThreadEmojiBlockingEnabled,
-        police: isPoliceEmojiBlockingEnabled
+        emDash: isEmDashBlockingEnabled
     });
     
-    allTweets.forEach(tweet => processTweet(tweet));
+    allTweets.forEach(tweet => {
+        // Check if it should be hidden based only on em-dash rule
+        const textContent = extractTweetText(tweet);
+        const shouldBeHidden = isEmDashBlockingEnabled && containsWordBoundEmDash(textContent);
+
+        if (shouldBeHidden) {
+            // Hide it (hideTweet handles already hidden ones)
+            hideTweet(tweet, 'em-dash');
+        } else {
+            // If it's currently hidden, un-hide it
+            if (hiddenTweets.has(tweet)) {
+                showTweet(tweet);
+            }
+            // If it's not hidden and shouldn't be, do nothing.
+        }
+    });
 }
 
 // Listen for messages from the popup
@@ -310,21 +195,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.action === 'toggleEmDashState') {
         isEmDashBlockingEnabled = message.emDashBlockingEnabled;
         console.log(`DeadDash: Em Dash blocking ${isEmDashBlockingEnabled ? 'enabled' : 'disabled'}`);
-        updateAllTweets();
-    }
-    else if (message.action === 'toggleEmojiState') {
-        isEmojiBlockingEnabled = message.emojiBlockingEnabled;
-        console.log(`DeadDash: Emoji blocking ${isEmojiBlockingEnabled ? 'enabled' : 'disabled'}`);
-        updateAllTweets();
-    }
-    else if (message.action === 'toggleThreadEmojiState') {
-        isThreadEmojiBlockingEnabled = message.threadEmojiBlockingEnabled;
-        console.log(`DeadDash: Thread emoji blocking ${isThreadEmojiBlockingEnabled ? 'enabled' : 'disabled'}`);
-        updateAllTweets();
-    }
-    else if (message.action === 'togglePoliceEmojiState') {
-        isPoliceEmojiBlockingEnabled = message.policeEmojiBlockingEnabled;
-        console.log(`DeadDash: Police emoji blocking ${isPoliceEmojiBlockingEnabled ? 'enabled' : 'disabled'}`);
         updateAllTweets();
     }
     sendResponse({ success: true });
@@ -343,20 +213,11 @@ function initializeDeadDash() {
     console.log("DeadDash: Initializing...");
     
     // Load enabled state from storage
-    chrome.storage.sync.get(['emDashBlockingEnabled', 'emojiBlockingEnabled', 'threadEmojiBlockingEnabled', 'policeEmojiBlockingEnabled'], function(result) {
+    chrome.storage.sync.get(['emDashBlockingEnabled'], function(result) {
         // Default em-dash blocking to enabled if not set
         isEmDashBlockingEnabled = result.emDashBlockingEnabled !== false;
-        // Default to disabled for emoji blocking
-        isEmojiBlockingEnabled = result.emojiBlockingEnabled === true;
-        // Default to disabled for thread emoji blocking
-        isThreadEmojiBlockingEnabled = result.threadEmojiBlockingEnabled === true;
-        // Default to disabled for police emoji blocking
-        isPoliceEmojiBlockingEnabled = result.policeEmojiBlockingEnabled === true;
         
         console.log(`DeadDash: Em Dash blocking ${isEmDashBlockingEnabled ? 'enabled' : 'disabled'}`);
-        console.log(`DeadDash: Emoji blocking ${isEmojiBlockingEnabled ? 'enabled' : 'disabled'}`);
-        console.log(`DeadDash: Thread emoji blocking ${isThreadEmojiBlockingEnabled ? 'enabled' : 'disabled'}`);
-        console.log(`DeadDash: Police emoji blocking ${isPoliceEmojiBlockingEnabled ? 'enabled' : 'disabled'}`);
         
         // Initial scan for tweets already present
         scanForTweets();

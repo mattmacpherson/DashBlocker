@@ -129,60 +129,6 @@ input:checked + .slider:before {
   transform: translateX(26px);
 }
 
-/* Stats Styles */
-.stats-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.stats-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1D9BF0;
-  margin: 0;
-}
-
-.reset-button {
-  background-color: #ED4F32;
-  color: white;
-  border: none;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.reset-button:hover {
-  background-color: #c83a20;
-}
-
-.stats-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.stats-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-  font-size: 13px;
-}
-
-.stats-label {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.stats-value {
-  font-weight: 600;
-  color: #1D9BF0;
-}
-
 /* Footer */
 footer {
   padding: 16px;
