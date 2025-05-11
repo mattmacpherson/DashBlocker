@@ -1,8 +1,13 @@
 # DeadDash
 
-## Fight AI-generated spam: Instantly filter out tweets with em-dashes from your timeline.
+## Fight AI-generated spam: Hide word-bound em dashes from your timeline.
 
-DeadDash is a browser extension that helps you clean up your X timeline by automatically hiding posts that contain em-dashes (—), which are frequently used in AI-generated content.
+DeadDash is a browser extension designed to tidy up your X timeline by automatically hiding posts containing **word-bound em dashes** (e.g., word—word). This specific pattern is frequently found in AI-generated content.
+
+* **Precise Filtering**: Only posts containing em dashes directly connecting words (word—word) will be hidden.
+* **Avoid False Positives**: Posts with standalone em dashes, punctuation-bound em dashes, or stylistic uses are not affected.
+
+Enjoy a cleaner timeline without sacrificing the genuine posts you love.
 
 ## Features
 
@@ -13,10 +18,9 @@ DeadDash is a browser extension that helps you clean up your X timeline by autom
 
 ## Installation
 
-### Chrome Web Store (Coming Soon)
-1. Visit the Chrome Web Store
-2. Search for "DeadDash"
-3. Click "Add to Chrome"
+### Chrome Web Store
+1. Visit the [DeadDash extension page](https://chromewebstore.google.com/detail/deaddash/fnpkdioianapnpbhcchfodpknoedkenkK) on the Chrome Web Store
+2. Click **"Add to Chrome"** to install it in your browser  
 
 ### Manual Installation
 1. Download or clone this repository
