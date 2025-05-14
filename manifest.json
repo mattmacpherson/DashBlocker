@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "DeadDash",
-  "version": "1.1.0",
-  "description": "Fight AI-generated spam: Instantly filter out tweets with em-dashes from your timeline.",
+  "version": "1.2.0",
+  "description": "Fight AI Spam: Instantly Filter Out Posts with Em-Dashes on Twitter and Reddit",
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
@@ -12,13 +12,19 @@
     }
   },
   "permissions": ["storage"],
+  "host_permissions": [
+    "*://*.reddit.com/*",
+    "https://old.reddit.com/*"
+  ],
   "content_scripts": [
     {
       "matches": [
         "*://*.x.com/*",
         "https://x.com/*",
         "https://twitter.com/*",
-        "https://*.twitter.com/*"
+        "https://*.twitter.com/*",
+        "*://*.reddit.com/*",
+        "https://old.reddit.com/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"
